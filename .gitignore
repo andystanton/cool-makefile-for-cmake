@@ -1,0 +1,5 @@
+CMakeLists.txt
+**.cpp
+**.c
+cmake-build-*
+xcode-*
