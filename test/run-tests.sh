@@ -18,7 +18,7 @@ function test_lang() {
         sh -c 'mkdir -p '$test_path' \
             && cd '$test_path' \
             && cp '$mount_path'/Makefile '$test_path' \
-            && make project_name=test-project project_lang='$target_lang' run')
+            && make project_name=test-project project_lang='$target_lang' cmake_min_version=3.5 run')
 
     if [ $? = 0 ] && echo "$makefile_output" | egrep -q '^hello, world!'; then
         return 0
@@ -40,7 +40,7 @@ function log_result() {
 
 echo "Building test environment..."
 
-docker build $script_path -t $docker_image_name 
+docker build $script_path -t $docker_image_name
 
 echo "Running tests..."
 
