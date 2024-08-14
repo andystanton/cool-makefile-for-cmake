@@ -25,7 +25,7 @@ make generator=Xcode type=release run
 Initialise a skeleton CMake project with an example C source file:
 
 ```sh
-make project_name=foo project_lang=c init
+make project_name=foo project_lang=c cmake_min_version=3.5 init
 ```
 
 ## Targets
@@ -55,7 +55,8 @@ make project_name=foo project_lang=c init
 ### Variables that apply only to the init target
 
 - `project_name`: if supplied then the init target will not prompt for a project name.
-- `project_lang`: if supplied then the init target will not prompt for a project language. Valid languages are 'c' and 'cpp'.
+- `project_lang`: if supplied then the init target will not prompt for a project language. Valid languages are 'c' and 'cpp'. Default value is 'c'.
+- `cmake_min_version`: if supplied then the init target will not prompt for a CMake minimum version. Default value is 3.5.
 
 ## Dependencies
 

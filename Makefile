@@ -37,6 +37,7 @@ endef
 
 project_name:=?
 project_lang:=?
+cmake_min_version:=?
 type:=debug
 generator:=$(shell if [ -x "$$(which ninja)" ]; then echo "Ninja"; else echo "Unix Makefiles"; fi)
 build_path:=$(shell if [ "$(call to_lower_case,$(generator))" = "xcode" ]; then echo "xcode-build"; else echo "cmake-build-$(call to_lower_case,$(type))"; fi)
@@ -53,6 +54,9 @@ override debug_types:=Debug RelWithDebInfo
 override cmake_build_type_arg:=$(call find_in_list,$(type),$(valid_types))
 override cmake_generator_arg:=$(call find_in_list,$(generator),$(valid_generators))
 override is_debug:=$(call exists_in_list,$(type),$(debug_types))
+
+override default_cmake_min_version:=3.5
+override default_project_lang:=c
 
 # =============================================================================
 # Utility targets
@@ -134,11 +138,25 @@ init:
 		if [ "$$project_name" = "?" ]; then \
 			read -p "Enter project name: " project_name; \
 		fi; \
+		if [ -z "$$project_name" ]; then \
+			echo "Project name required" >&2; \
+			exit 1; \
+		fi; \
 		project_lang=$(project_lang); \
 		if [ "$$project_lang" = "?" ]; then \
-			read -p "Enter project language (c|cpp): " project_lang; \
+			read -p "Enter project language (c|cpp): (default: $(default_project_lang)) " project_lang; \
+		fi; \
+		if [ -z "$$project_lang" ]; then \
+			project_lang="$(default_project_lang)"; \
 		fi; \
 		project_lang=$$(echo $$project_lang | tr '[:upper:]' '[:lower:]' | sed -E -e 's/^(c\+\+|cxx)$$/cpp/'); \
+		cmake_min_version=$(cmake_min_version); \
+		if [ "$$cmake_min_version" = "?" ]; then \
+			read -p "Enter CMake minimum version: (default: $(default_cmake_min_version)) " cmake_min_version; \
+		fi; \
+		if [ -z "$$cmake_min_version" ]; then \
+			cmake_min_version="$(default_cmake_min_version)"; \
+		fi; \
 		if [ "$$project_lang" = "c" ]; then \
 			echo "#include \"stdio.h\"\n\nint main() {\n\tprintf(\"%s\", \"hello, world!\");\n\treturn 0;\n}\n" >$$project_name.$$project_lang; \
 		elif [ "$$project_lang" = "cpp" ]; then \
@@ -147,7 +165,7 @@ init:
 			echo "Unsupported language type" >&2; \
 			exit 1; \
 		fi; \
-		echo "project($$project_name)\n\nadd_executable($$project_name $$project_name.$$project_lang)\n\n" >CMakeLists.txt; \
+		echo "cmake_minimum_required(VERSION $$cmake_min_version)\n\nproject($$project_name)\n\nadd_executable($$project_name $$project_name.$$project_lang)\n\n" >CMakeLists.txt; \
 	fi;
 
 #: Configure the project for the selected type and generator
@@ -181,6 +199,7 @@ endif
 run: build
 	@app_name=$$(cmake -S . -B "$(build_path)" --trace 2>&1 \
 					| egrep -i add_executable \
+					| egrep -v -i '^CMake Warning ' \
 					| sort -r \
 					| head -n 1 \
 					| sed -E 's/.*add_executable.[[:space:]]*([A-Za-z0-9\\"_\.+-]+)[[:space:]].*/\1/'); \
@@ -212,4 +231,3 @@ list-variables:
 
 list-targets:
 	@egrep "^[A-Za-z0-9_-]+\:([^\=]|$$)" $(lastword $(MAKEFILE_LIST)) | sed -E 's/(.*):.*/\1/g' | sort
-
