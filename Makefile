@@ -200,6 +200,7 @@ run: build
 	@app_name=$$(cmake -S . -B "$(build_path)" --trace 2>&1 \
 					| egrep -i add_executable \
 					| egrep -v -i '^CMake Warning ' \
+					| egrep -v -i 'IMPORTED \)$$' \
 					| sort -r \
 					| head -n 1 \
 					| sed -E 's/.*add_executable.[[:space:]]*([A-Za-z0-9\\"_\.+-]+)[[:space:]].*/\1/'); \
